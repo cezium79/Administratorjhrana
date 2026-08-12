@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.nio.file.StandardCopyOption;
 
 @Service
 public class ReportService {
@@ -175,6 +176,39 @@ public class ReportService {
         if (dto.getNotes() != null) {
             report.setNotes(dto.getNotes());
         }
+        return reportRepository.save(report);
+    }
+
+    @Transactional
+    public Report saveReportFromFile(ReportDTO dto, String filePath) {
+        Report report = new Report();
+        report.setTitle(dto.getTitle() != null ? dto.getTitle() : "Отчёт от " + LocalDateTime.now().toLocalDate());
+        report.setGuardName(dto.getGuardName());
+        report.setDate(dto.getDate() != null ? dto.getDate() : LocalDateTime.now());
+        report.setNotes(dto.getNotes());
+        report.setFilePath(filePath);
+        
+        String lowerFilename = filePath.toLowerCase();
+        if (lowerFilename.endsWith(".pdf")) {
+            report.setPdfUrl(filePath);
+        } else if (lowerFilename.endsWith(".html") || lowerFilename.endsWith(".htm")) {
+            report.setHtmlUrl(filePath);
+            try {
+                report.setHtmlContent(Files.readString(storageService.getFile(filePath), StandardCharsets.UTF_8));
+                if (report.getHtmlContent().length() > 50000) {
+                    report.setHtmlContent(report.getHtmlContent().substring(0, 50000));
+                }
+            } catch (IOException e) {
+                // ignore
+            }
+        }
+        
+        try {
+            report.setSize(Files.size(storageService.getFile(filePath)));
+        } catch (IOException e) {
+            // ignore
+        }
+        
         return reportRepository.save(report);
     }
 

@@ -32,8 +32,9 @@
             <iframe :src="`/api/reports/${report.id}/html`" class="preview-frame" frameborder="0"></iframe>
           </template>
           <template v-else-if="report.pdfUrl">
-            <embed :src="`/api/reports/${report.id}/pdf`" type="application/pdf" class="preview-frame" />
+            <embed :src="`http://localhost:8080/reports/${report.id}/pdf`" type="application/pdf" class="preview-frame" />
           </template>
+
           <div v-else style="text-align: center; padding: 40px; color: #999;">
             Нет доступного контента для предпросмотра
           </div>

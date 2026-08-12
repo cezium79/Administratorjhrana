@@ -2,13 +2,19 @@
   <div>
     <div class="header">
       <h1>🛡️ Контроль обходов</h1>
-      <div class="header-actions">
-        <span>Администратор</span>
-        <button class="btn btn-secondary btn-small" @click="handleLogout">Выйти</button>
-      </div>
-    </div>
-
+     <div class="header-actions">
+       <span>Администратор</span>
+       <button class="btn btn-warning btn-small" @click="checkEmails" :disabled="emailCheckLoading">
+         {{ emailCheckLoading ? 'Проверка...' : '📧 Проверить почту' }}
+       </button>
+       <button class="btn btn-secondary btn-small" @click="handleLogout">Выйти</button>
+     </div>
+     </div>
     <div class="container">
+    <!-- Email Check Result -->
+    <div v-if="emailCheckMessage" :class="'email-check-result ' + emailCheckMessageType">
+      {{ emailCheckMessage }}
+    </div>
       <!-- Filters -->
       <div class="filters">
         <div class="form-group">
@@ -175,6 +181,9 @@ export default {
     const emailError = ref('')
     const emailSuccess = ref('')
     const emailSending = ref(false)
+    const emailCheckLoading = ref(false)
+    const emailCheckMessage = ref('')
+    const emailCheckMessageType = ref('')
 
     const filters = ref({
       guardName: '',
@@ -225,7 +234,7 @@ export default {
           params.dateTo = new Date(filters.value.dateTo + 'T23:59:59').toISOString()
         }
 
-        const response = await http.get('/api/reports', { params })
+        const response = await http.get('/reports', { params })
         reports.value = response.data.content || []
         totalElements.value = response.data.totalElements || 0
         totalPages.value = response.data.totalPages || 0
@@ -238,7 +247,7 @@ export default {
 
     const loadGuardNames = async () => {
       try {
-        const response = await http.get('/api/reports/filters')
+        const response = await http.get('/reports/filters')
         guardNames.value = response.data.guardNames || []
       } catch (e) {
         // ignore
@@ -270,7 +279,7 @@ export default {
 
     const downloadReport = async (report) => {
       try {
-        const response = await http.get(`/api/reports/${report.id}/download`, {
+        const response = await http.get(`/reports/${report.id}/download`, {
           responseType: 'blob'
         })
         const url = window.URL.createObjectURL(new Blob([response.data]))
@@ -288,16 +297,16 @@ export default {
 
     const printReport = (report) => {
       if (report.htmlUrl) {
-        window.open(`/api/reports/${report.id}/html`, '_blank')
+        window.open(`/reports/${report.id}/html`, '_blank')
       } else if (report.pdfUrl) {
-        window.open(`/api/reports/${report.id}/pdf`, '_blank')
+        window.open(`/reports/${report.id}/pdf`, '_blank')
       }
     }
 
     const deleteReport = async (report) => {
       if (!confirm(`Удалить отчёт "${report.title}"?`)) return
       try {
-        await http.delete(`/api/reports/${report.id}`)
+        await http.delete(`/reports/${report.id}`)
         await loadReports()
       } catch (error) {
         console.error('Delete error:', error)
@@ -330,7 +339,7 @@ export default {
       emailError.value = ''
       emailSuccess.value = ''
       try {
-        await http.post(`/api/reports/${emailReportId.value}/email`, {
+        await http.post(`/reports/${emailReportId.value}/email`, {
           email: emailAddress.value
         })
         emailSuccess.value = 'Отчёт успешно отправлен!'
@@ -343,6 +352,33 @@ export default {
         emailSending.value = false
       }
     }
+    const checkEmails = async () => {
+      emailCheckLoading.value = true
+      emailCheckMessage.value = ''
+      emailCheckMessageType.value = ''
+
+      try {
+        const response = await http.post('/reports/check-email', {})
+        emailCheckMessage.value = response.data.status === 'success'
+          ? `✅ Принято писем: ${response.data.processedCount}`
+          : `❌ ${response.data.message}`
+        emailCheckMessageType.value = response.data.status === 'success'
+          ? 'success'
+          : 'error'
+
+        // Если письма приняты, перезагрузим список
+        if (response.data.status === 'success') {
+          await loadReports()
+        }
+      } catch (error) {
+        emailCheckMessage.value = '❌ Ошибка подключения к серверу'
+        emailCheckMessageType.value = 'error'
+        console.error('Email check error:', error)
+      } finally {
+        emailCheckLoading.value = false
+      }
+    }
+
 
     onMounted(() => {
       loadReports()
@@ -376,8 +412,46 @@ export default {
       handleDelete,
       handleLogout,
       openEmailModal,
-      sendEmail
+      sendEmail,
+      emailCheckLoading,
+      emailCheckMessage,
+      emailCheckMessageType,
+      checkEmails,
     }
   }
 }
 </script>
+<style scoped>
+.email-check-result {
+  padding: 12px 16px;
+  margin: 10px 0 20px 0;
+  border-radius: 4px;
+  font-weight: 500;
+  text-align: center;
+}
+.email-check-result.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+.email-check-result.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+.btn-warning {
+  background-color: #ffc107;
+  color: #000;
+  border-color: #ffc107;
+}
+.btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+}
+.btn-warning:disabled {
+  background-color: #ffe69c;
+  border-color: #ffe69c;
+  color: #666;
+  cursor: not-allowed;
+}
+</style>

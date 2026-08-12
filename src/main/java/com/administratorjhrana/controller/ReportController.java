@@ -4,6 +4,7 @@ import com.administratorjhrana.dto.ReportDTO;
 import com.administratorjhrana.model.Report;
 import com.administratorjhrana.service.EmailService;
 import com.administratorjhrana.service.ReportService;
+import com.administratorjhrana.service.ImapReportReceiver;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -15,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.format.annotation.DateTimeFormat;
+
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -22,16 +25,19 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/reports")
+@RequestMapping("/reports")
 public class ReportController {
 
     private final ReportService reportService;
     private final EmailService emailService;
+    private final ImapReportReceiver imapReceiver;
+    // другие ваши зависимости...
 
     @Autowired
-    public ReportController(ReportService reportService, EmailService emailService) {
+    public ReportController(ReportService reportService, EmailService emailService, ImapReportReceiver imapReceiver) {
         this.reportService = reportService;
         this.emailService = emailService;
+        this.imapReceiver = imapReceiver;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -88,12 +94,13 @@ public class ReportController {
             @RequestParam(defaultValue = "DESC") String direction,
             @RequestParam(required = false) String guardName,
             @RequestParam(required = false) String title,
-            @RequestParam(required = false) LocalDateTime dateFrom,
-            @RequestParam(required = false) LocalDateTime dateTo) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTo) {
 
         Page<Report> reports = reportService.getReports(page, size, sortBy, direction, guardName, title, dateFrom, dateTo);
         return ResponseEntity.ok(reports);
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<Report> getReport(@PathVariable Long id) {
@@ -168,6 +175,15 @@ public class ReportController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Failed to send email: " + e.getMessage()));
+        }
+    }
+    @PostMapping("/check-email")
+    public ResponseEntity<Map<String, Object>> checkEmailsManually() {
+        try {
+            Map<String, Object> result = imapReceiver.checkEmailsManually();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
 
