@@ -29,7 +29,7 @@
         <!-- Preview Tab -->
         <div v-if="activeTab === 'preview'">
           <template v-if="report.htmlUrl">
-            <iframe :src="`/api/reports/${report.id}/html`" class="preview-frame" frameborder="0"></iframe>
+            <iframe :src="`http://localhost:8080/reports/${report.id}/html`" class="preview-frame" frameborder="0"></iframe>
           </template>
           <template v-else-if="report.pdfUrl">
             <embed :src="`http://localhost:8080/reports/${report.id}/pdf`" type="application/pdf" class="preview-frame" />
@@ -71,6 +71,7 @@
 
       <!-- Footer -->
       <div class="modal-footer">
+        <button class="btn btn-success" @click="saveChanges">💾 Сохранить</button>
         <button class="btn btn-secondary" @click="$emit('close')">Закрыть</button>
         <button class="btn btn-success" @click="handleDownload">⬇ Скачать</button>
         <button class="btn btn-primary" @click="handleEmail">📧 На email</button>
@@ -123,7 +124,7 @@ export default {
 
     const saveChanges = async () => {
       try {
-        await http.put(`/api/reports/${props.report.id}`, editForm)
+        await http.put(`/reports/${props.report.id}`, editForm)
         alert('Изменения сохранены')
       } catch (error) {
         alert('Ошибка при сохранении')
@@ -131,7 +132,7 @@ export default {
     }
 
     const handleDownload = () => {
-      window.open(`/api/reports/${props.report.id}/download`, '_blank')
+      window.open(`/reports/${props.report.id}/download`, '_blank')
     }
 
     const handleEmail = () => {
@@ -140,9 +141,9 @@ export default {
 
     const handlePrint = () => {
       if (props.report.htmlUrl) {
-        window.open(`/api/reports/${props.report.id}/html`, '_blank')
+        window.open(`/reports/${props.report.id}/html`, '_blank')
       } else if (props.report.pdfUrl) {
-        window.open(`/api/reports/${props.report.id}/pdf`, '_blank')
+        window.open(`/reports/${props.report.id}/pdf`, '_blank')
       }
     }
 
