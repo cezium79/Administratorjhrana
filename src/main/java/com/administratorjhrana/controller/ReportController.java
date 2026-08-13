@@ -1,23 +1,24 @@
 package com.administratorjhrana.controller;
 
 import com.administratorjhrana.dto.ReportDTO;
+import com.administratorjhrana.dto.ReportSubmissionDTO;
 import com.administratorjhrana.model.Report;
 import com.administratorjhrana.service.EmailService;
-import com.administratorjhrana.service.ReportService;
 import com.administratorjhrana.service.ImapReportReceiver;
+import com.administratorjhrana.service.ReportService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.format.annotation.DateTimeFormat;
-
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -31,7 +32,6 @@ public class ReportController {
     private final ReportService reportService;
     private final EmailService emailService;
     private final ImapReportReceiver imapReceiver;
-    // другие ваши зависимости...
 
     @Autowired
     public ReportController(ReportService reportService, EmailService emailService, ImapReportReceiver imapReceiver) {
@@ -86,6 +86,13 @@ public class ReportController {
         return ResponseEntity.ok(report);
     }
 
+    // Эндпоинт для мобильного приложения
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Report> submitReportFromMobile(@Valid @RequestBody ReportSubmissionDTO dto) {
+        Report savedReport = reportService.saveReportFromDto(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedReport);
+    }
+
     @GetMapping
     public ResponseEntity<Page<Report>> getReports(
             @RequestParam(defaultValue = "0") int page,
@@ -100,7 +107,6 @@ public class ReportController {
         Page<Report> reports = reportService.getReports(page, size, sortBy, direction, guardName, title, dateFrom, dateTo);
         return ResponseEntity.ok(reports);
     }
-
 
     @GetMapping("/{id}")
     public ResponseEntity<Report> getReport(@PathVariable Long id) {
@@ -177,6 +183,7 @@ public class ReportController {
                     .body(Map.of("error", "Failed to send email: " + e.getMessage()));
         }
     }
+
     @PostMapping("/check-email")
     public ResponseEntity<Map<String, Object>> checkEmailsManually() {
         try {

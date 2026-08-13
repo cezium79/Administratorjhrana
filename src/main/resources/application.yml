@@ -2,10 +2,9 @@ spring:
   main:
     allow-circular-references: true
   datasource:
-    url: jdbc:h2:file:./data/jhrana
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:postgresql://localhost:5440/jhrana_db
+    username: postgres
+    password: postgres
   jpa:
     hibernate:
       ddl-auto: update

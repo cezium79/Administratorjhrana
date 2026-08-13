@@ -31,6 +31,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+
+        String path = request.getRequestURI();
+
+        // 👇 Пропускаем все публичные эндпоинты без проверки токена
+        if (path.startsWith("/reports/") || path.startsWith("/h2-console/") ||
+                path.equals("/reports") || path.equals("/reports/filters") || path.equals("/reports/check-email")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {

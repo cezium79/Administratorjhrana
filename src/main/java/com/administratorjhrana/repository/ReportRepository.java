@@ -28,4 +28,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
     @Query("SELECT DISTINCT r.title FROM Report r WHERE r.title IS NOT NULL AND r.title != ''")
     List<String> findDistinctTitles();
+
+    // Метод для полнотекстового поиска из п. 2 плана
+    List<Report> findByTitleContainingIgnoreCaseOrNotesContainingIgnoreCaseOrGuardNameContainingIgnoreCase(String title, String notes, String guardName);
 }

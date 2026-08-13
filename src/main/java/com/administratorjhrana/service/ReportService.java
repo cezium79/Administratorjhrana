@@ -1,7 +1,10 @@
 package com.administratorjhrana.service;
 
 import com.administratorjhrana.dto.ReportDTO;
+import com.administratorjhrana.model.CheckpointLog;
 import com.administratorjhrana.model.Report;
+import com.administratorjhrana.model.Round;
+import com.administratorjhrana.model.Violation;
 import com.administratorjhrana.repository.ReportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,9 +22,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.nio.file.StandardCopyOption;
+import com.administratorjhrana.dto.*;
+import lombok.RequiredArgsConstructor;
+
+
 
 @Service
 public class ReportService {
@@ -61,7 +68,67 @@ public class ReportService {
         report.setNotes(dto.getNotes());
         return reportRepository.save(report);
     }
+    @Transactional
+    public Report saveReportFromDto(ReportSubmissionDTO dto) {
+        Report report = new Report();
+        report.setTitle("Отчет: " + dto.getShiftId());
+        report.setGuardName(dto.getEmployeeName());
+        report.setDate(dto.getStartTime());
+        report.setNotes("Strict sequence: " + dto.getStrictSequenceEnabled());
 
+        // Создание раундов
+        List<Round> rounds = new ArrayList<>();
+        if (dto.getRounds() != null) {
+            for (RoundDTO roundDto : dto.getRounds()) {
+                Round round = new Round();
+                round.setRoundNumber(roundDto.getRoundId());
+                round.setLocation(roundDto.getRouteName());
+
+                // Обработка нарушений раунда
+                if (roundDto.getSequenceViolations() != null && roundDto.getSequenceViolations() > 0) {
+                    Violation violation = new Violation();
+                    violation.setType("SEQUENCE_BREACH");
+                    violation.setDescription("Нарушение: " + roundDto.getSequenceViolations());
+                    violation.setSeverity("HIGH");
+                    round.addViolation(violation);
+                }
+                rounds.add(round);
+                report.addRound(round);
+            }
+        }
+
+        // Создание логов (CheckpointLog)
+        if (dto.getLogs() != null) {
+            for (LogEntryDTO logDto : dto.getLogs()) {
+                CheckpointLog log = new CheckpointLog();
+                log.setCheckpointId(logDto.getCheckpointId());
+                log.setCheckpointName(logDto.getCheckpointName());
+                log.setTimestamp(logDto.getTimestamp());
+                log.setRouteName(logDto.getRouteName());
+                log.setSequenceIndex(logDto.getSequenceIndex());
+                log.setIsSequenceCorrect(logDto.getIsSequenceCorrect());
+                log.setScanType(logDto.getScanType());
+                log.setActionType(logDto.getActionType());
+                log.setSequenceErrorType(logDto.getSequenceErrorType());
+                log.setInputValue(logDto.getInputValue());
+                log.setPhotoPath(logDto.getPhotoPath());
+                log.setAnswer(logDto.getAnswer());
+
+                // Привязка к раунду по ID
+                if (logDto.getRoundId() != null && rounds != null) {
+                    Round matchedRound = rounds.stream()
+                            .filter(r -> r.getRoundNumber().equals(logDto.getRoundId()))
+                            .findFirst().orElse(null);
+                    if (matchedRound != null) {
+                        log.setRound(matchedRound);
+                        matchedRound.addLog(log);
+                    }
+                }
+            }
+        }
+
+        return reportRepository.save(report);
+    }
     @Transactional
     public Report saveReportFromUrl(ReportDTO dto, String fileUrl) {
         Report report = new Report();

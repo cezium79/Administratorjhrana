@@ -2,10 +2,20 @@ package com.administratorjhrana.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "reports")
 public class Report {
+
+    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Round> rounds = new ArrayList<>();
+
+    public void addRound(Round round) {
+        rounds.add(round);
+        round.setReport(this);
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
