@@ -39,4 +39,14 @@ public class Violation {
         incidents.add(i);
         i.setViolation(this);
     }
+
+    public void setType(String sequenceBreach) {
+    }
+
+    public void setDescription(String s) {
+    }
+
+    public void setSeverity(String high) {
+
+    }
 }

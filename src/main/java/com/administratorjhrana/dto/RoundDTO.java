@@ -1,17 +1,33 @@
 package com.administratorjhrana.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import java.time.LocalDateTime;
 
 @Data
 public class RoundDTO {
+    @JsonProperty("round_id")
     private Integer roundId;
-    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss") private LocalDateTime startTime;
-    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss") private LocalDateTime endTime;
+
+    @JsonProperty("start_time")
+    private String startTime;
+
+    @JsonProperty("end_time")
+    private String endTime;
+
+    @JsonProperty("route_id")
     private String routeId;
+
+    @JsonProperty("route_name")
     private String routeName;
+
+    @JsonProperty("checkpoints_count")
     private Integer checkpointsCount;
+
+    @JsonProperty("checkpoints_passed")
     private Integer checkpointsPassed;
+
+    @JsonProperty("sequence_violations")
     private Integer sequenceViolations;
+
+
 }

@@ -22,4 +22,6 @@ public class LogEntryDTO {
     private String inputValue;
     private String photoPath;
     private String answer;
+
+
 }

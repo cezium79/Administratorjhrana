@@ -1,13 +1,17 @@
 package com.administratorjhrana.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import java.time.LocalDateTime;
 
 @Data
 public class ViolationDTO {
     private String type;
     private String description;
     private String severity;
-    @JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss") private LocalDateTime detectedAt;
+    @JsonProperty("image_urls")
+    private String imageUrls;
+    @JsonProperty("detected_at")
+    private String detectedAt;
+    @JsonProperty("round_id")   // добавили для привязки
+    private Integer roundId;
 }

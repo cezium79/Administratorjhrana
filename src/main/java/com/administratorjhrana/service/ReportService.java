@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -68,12 +69,21 @@ public class ReportService {
         report.setNotes(dto.getNotes());
         return reportRepository.save(report);
     }
+    private LocalDateTime parseDateTime(String dateStr) {
+        if (dateStr == null) return null;
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+            return LocalDateTime.parse(dateStr, formatter);
+        } catch (Exception e) {
+            return null;
+        }
+    }
     @Transactional
     public Report saveReportFromDto(ReportSubmissionDTO dto) {
         Report report = new Report();
         report.setTitle("Отчет: " + dto.getShiftId());
         report.setGuardName(dto.getEmployeeName());
-        report.setDate(dto.getStartTime());
+        report.setDate(parseDateTime(dto.getStartTime()));
         report.setNotes("Strict sequence: " + dto.getStrictSequenceEnabled());
 
         // Создание раундов
@@ -99,11 +109,11 @@ public class ReportService {
 
         // Создание логов (CheckpointLog)
         if (dto.getLogs() != null) {
-            for (LogEntryDTO logDto : dto.getLogs()) {
+            for (LogDTO logDto : dto.getLogs()) {
                 CheckpointLog log = new CheckpointLog();
                 log.setCheckpointId(logDto.getCheckpointId());
                 log.setCheckpointName(logDto.getCheckpointName());
-                log.setTimestamp(logDto.getTimestamp());
+                log.setTimestamp(LocalDateTime.parse(logDto.getTimestamp()));
                 log.setRouteName(logDto.getRouteName());
                 log.setSequenceIndex(logDto.getSequenceIndex());
                 log.setIsSequenceCorrect(logDto.getIsSequenceCorrect());
@@ -113,6 +123,9 @@ public class ReportService {
                 log.setInputValue(logDto.getInputValue());
                 log.setPhotoPath(logDto.getPhotoPath());
                 log.setAnswer(logDto.getAnswer());
+                log.setInputValue(logDto.getInputValue());
+                log.setAnswer(logDto.getAnswer());
+
 
                 // Привязка к раунду по ID
                 if (logDto.getRoundId() != null && rounds != null) {

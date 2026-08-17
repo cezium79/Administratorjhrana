@@ -19,6 +19,8 @@ target/
 .settings/
 .project
 .classpath
+# Игнорируем внешние конфигурации с секретами
+config/application-secrets.yml
 
 # Node
 frontend/node_modules/

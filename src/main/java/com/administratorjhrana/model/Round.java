@@ -41,14 +41,16 @@ public class Round {
 
     @OneToMany(mappedBy = "round", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CheckpointLog> logs = new ArrayList<>();
-
-    public void addViolation(Violation v) {
-        violations.add(v);
-        v.setRound(this);
+    public void addViolation(Violation violation) {
+        // если у вас есть список нарушений, например:
+        this.violations.add(violation);
     }
-
     public void addLog(CheckpointLog log) {
-        logs.add(log);
-        log.setRound(this);
-    }
+        if (log != null) {
+            logs.add(log);
+            log.setRound(this);  // устанавливаем обратную ссылку
+        }
+
+
+}
 }
