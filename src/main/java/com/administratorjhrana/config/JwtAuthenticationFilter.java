@@ -35,8 +35,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         // 👇 Пропускаем все публичные эндпоинты без проверки токена
-        if (path.startsWith("/reports/") || path.startsWith("/h2-console/") ||
-                path.equals("/reports") || path.equals("/reports/filters") || path.equals("/reports/check-email")) {
+        if (path.startsWith("/api/reports/") || path.startsWith("/reports/") ||
+                path.startsWith("/h2-console/") ||
+                path.equals("/reports") || path.equals("/api/reports") ||
+                path.equals("/reports/filters") || path.equals("/api/reports/filters") ||
+                path.equals("/reports/check-email") || path.equals("/api/reports/check-email")) {
             filterChain.doFilter(request, response);
             return;
         }
